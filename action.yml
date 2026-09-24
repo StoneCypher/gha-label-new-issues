@@ -1,0 +1,40 @@
+name: Label new issues
+description: Adds a label, "triage" by default, to every newly opened issue, creating the label first if the repository lacks it.
+branding:
+  icon: tag
+  color: yellow
+
+inputs:
+  label:
+    description: The label to add to each new issue.
+    required: false
+    default: triage
+  color:
+    description: Hex colour, without the leading #, used only when the label has to be created.
+    required: false
+    default: FBCA04
+  token:
+    description: A token allowed to edit issues and create labels. The default workflow token works when the job grants `issues write`.
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Add the label
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ github.repository }}
+        ISSUE: ${{ github.event.issue.number }}
+        LABEL: ${{ inputs.label }}
+        COLOR: ${{ inputs.color }}
+      run: |
+        if [ -z "$ISSUE" ]; then
+          echo "::error::gha-label-new-issues runs on issue events, and this run has no issue. Trigger it with: on: issues: types: [opened]"
+          exit 1
+        fi
+        # Creating a label that already exists fails; that failure is the
+        # expected case after the first run, so it is ignored.
+        gh label create "$LABEL" --repo "$REPO" --color "$COLOR" > /dev/null 2>&1 || true
+        gh issue edit "$ISSUE" --repo "$REPO" --add-label "$LABEL"
