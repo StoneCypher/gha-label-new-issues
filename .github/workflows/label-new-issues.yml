@@ -1,0 +1,15 @@
+# This repository labels its own new issues with its own action, so the
+# action is exercised by every issue filed against it.
+name: Label new issues
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./
